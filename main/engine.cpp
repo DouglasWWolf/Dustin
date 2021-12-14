@@ -104,7 +104,7 @@ void CEngine::on_incoming_packet(const char* message, int length)
 
         default:
             printf(">>>> IGNORING UNKNOWN PACKET! <<<<\n");
-  //?          send_error();
+            UDPServer.reply(&packet_type, 1);
             return;
     }
 
