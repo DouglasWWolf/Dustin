@@ -15,7 +15,12 @@ unsigned char data_packet_2[FRAME_SIZE * 2];
 unsigned char data_packet_3[FRAME_SIZE * 2];
 //=========================================================================================================
 
-enum packet_type_t 
+
+
+//=========================================================================================================
+// These are the various sorts of packeets we can be sent
+//=========================================================================================================
+enum
 {
     CMD_HEADER  = 0x00,
     PCB0_HEADER = 0x01,
@@ -24,6 +29,11 @@ enum packet_type_t
     PCB3_HEADER = 0x04,
     STAT_HEADER = 0x05
 };
+
+// This is a 1 bit for each packet in a full set of frames
+const int FRAME_SET = (1 << CMD_HEADER  ) | (1 << PCB0_HEADER) | (1 << PCB1_HEADER)
+                    | (1 << PCB2_HEADER ) | (1 << PCB3_HEADER);
+//=========================================================================================================
 
 
 //=========================================================================================================
@@ -85,6 +95,10 @@ void CEngine::on_incoming_packet(const char* message, int length)
     // Keep track of which packets we have received
     m_rcvd_flags |= (1 << packet_type);
 
-    printf("Rcvd %i\n", m_rcvd_flags);
+    if (m_rcvd_flags & FRAME_SET)
+    {
+        printf("Full set of frame received\n");
+        m_rcvd_flags = 0;
+    }
 }
 //=========================================================================================================
