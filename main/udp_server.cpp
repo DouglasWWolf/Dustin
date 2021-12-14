@@ -106,8 +106,10 @@ void CUDPServer::task()
             continue;
         }
 
-        // Convert the sender's IP address into a string and display it
+        // Convert the sender's IP address into a string
         inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr, source_ip, sizeof(source_ip) - 1);
+        
+        // Tell the engineer pertinent details about the packet we just received
         printf("Rcvd packet type %i (%4i) bytes from %s\n", *input, length, source_ip);
 
         // Call the appropriate command handler
@@ -172,7 +174,6 @@ void CUDPServer::stop()
 //=========================================================================================================
 void CUDPServer::reply(void* data, int length)
 {
-
     // We want to send our reply back to the same port number we're listening on
     sockaddr_source.sin_port = htons(SERVER_PORT);
 
