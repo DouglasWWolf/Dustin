@@ -46,27 +46,30 @@ void CEngine::on_incoming_packet(const char* message, int length)
     // Tell the engineer what kind of packet we received
     printf("Rcvd packet type %i\n", *message);
 
+    // Packet type is the first byte of the message, and we bump the pointer to the actual data
+    int packet_type = *message++;
+
     // Stuff the packet into the correct buffer
-    switch (*packet)
+    switch (packet_type)
     {
         case CMD_HEADER:
-            memcpy(command_packet, message+1, sizeof command_packet);
+            memcpy(command_packet, message, sizeof command_packet);
             break;
 
         case PCB0_HEADER:
-            memcpy(data_packet0, message+1, sizeof data_packet0);
+            memcpy(data_packet_0, message, sizeof data_packet_0);
             break;
 
         case PCB1_HEADER:
-            memcpy(data_packet1, message+1, sizeof data_packet1);
+            memcpy(data_packet_1, message, sizeof data_packet_1);
             break;
 
         case PCB2_HEADER:
-            memcpy(data_packet2, message+1, sizeof data_packet2);
+            memcpy(data_packet_2, message, sizeof data_packet_2);
             break;
 
-        case PCB0_HEADER:
-            memcpy(data_packet3, message+1, sizeof data_packet3);
+        case PCB3_HEADER:
+            memcpy(data_packet_3, message, sizeof data_packet_3);
             break;
 
         case STAT_HEADER:
@@ -76,11 +79,11 @@ void CEngine::on_incoming_packet(const char* message, int length)
         default:
             printf(">>>> IGNORING UNKNOWN PACKET! <<<<\n");
   //?          send_error();
-            continue;
+            return;
     }
 
     // Keep track of which packets we have received
-    m_rcvd_flags |= (1 << *packet);
+    m_rcvd_flags |= (1 << packet_type);
 
     printf("Rcvd %i\n", m_rcvd_flags);
 }
