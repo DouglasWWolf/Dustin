@@ -134,8 +134,8 @@ void CEngine::send_status()
     status.packet_type = 0x05;
     
     // Fill in the FPGA version and revision with what we fetched from the FPGA
-    status.fpga_version  = 1;
-    status.fpga_revision = 42;
+    status.fpga_version  = FPGA.version;
+    status.fpga_revision = FPGA.revision;
 
     // Fill in the indicators of which packets we have received
     status.cmd_pkt_rcvd  = (m_rcvd_flags & (1 << CMD_HEADER )) ? 0xFF : 0;
