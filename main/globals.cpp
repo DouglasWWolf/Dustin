@@ -31,6 +31,9 @@ CI2C I2C;
 // The UDP server
 CUDPServer  UDPServer;
 
+// The engine that handles incoming packets and drives our FPGA
+CEngine  Engine;
+
 //========================================================================================================= 
 // msdelay() - Do nothing for the specified number of milliseconds
 //========================================================================================================= 

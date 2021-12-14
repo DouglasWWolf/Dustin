@@ -35,7 +35,7 @@ static struct sockaddr_in6 source_addr;
 static int  sock = -1;
 
 // This is incoming UDP message
-static char input[1000];
+static char input[2000];
 
 
 //========================================================================================================= 
@@ -50,38 +50,6 @@ static void hard_shutdown()
         close(sock);
         sock = -1;
     }
-
-}
-//========================================================================================================= 
-
-
-//========================================================================================================= 
-// recv_udp_message() - Fetches a UDP datagram from the network
-//
-// On Exit: input[]     = The message, nul terminated
-//          source_addr = The IP address of the sender
-//========================================================================================================= 
-static void recv_udp_message()
-{
-    while (true)
-    {
-        // Wait for a message to arrive
-        socklen_t socklen = sizeof(source_addr);
-        int len = recvfrom(sock, input, sizeof(input) - 1, 0, (struct sockaddr *)&source_addr, &socklen);
-
-        // If we received a message, nul-terminate the string and return to the caller
-        if (len >= 0)
-        {
-            printf("%s\n", input);
-            input[len] = 0;
-            return;
-        }
-        
-
-        // Log the fact that we somehow got a corrupted message
-        ESP_LOGE(TAG, "recvfrom failed: errno %d", errno);
-    }
-
 }
 //========================================================================================================= 
 
@@ -92,6 +60,8 @@ static void recv_udp_message()
 //========================================================================================================= 
 void CUDPServer::task()
 {
+    // How long is the buffer that will hold the address of the sender?
+    socklen_t socklen = sizeof(source_addr);
     
     // We're going to treat "sock_desc" as though it were a "sock_addr_in"
     sockaddr_in& sockaddr = *(sockaddr_in*)&sock_desc;
@@ -119,15 +89,20 @@ void CUDPServer::task()
 
     // Tell the engineer that the socket is built and we're ready for incoming data
     printf(">>>> Waiting for incoming UDP messages <<<<\n");
-
-    // We're going to do this forever...
     while (true)
     {
-        // Fetch a UDP message
-        recv_udp_message();
+        // Wait for a message to arrive
+        int length = recvfrom(sock, input, sizeof(input) - 1, 0, (struct sockaddr *)&source_addr, &socklen);
+
+        // If that failed, tell the engineer
+        if (length < 0)
+        {
+            ESP_LOGE(TAG, "recvfrom failed: errno %d", errno);
+            continue;
+        }
 
         // Call the appropriate command handler
-        printf("Got a packet!\n");
+        Engine.on_incoming_packet(input, length);
     }
 }
 //========================================================================================================= 
