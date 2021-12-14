@@ -28,6 +28,9 @@ CProvButton ProvButton;
 // An I2C bus for controlling external peripherals
 CI2C I2C;
 
+// The UDP server
+CUDPServer  UDPServer;
+
 //========================================================================================================= 
 // msdelay() - Do nothing for the specified number of milliseconds
 //========================================================================================================= 
