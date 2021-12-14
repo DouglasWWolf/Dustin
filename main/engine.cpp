@@ -3,27 +3,9 @@
 //=========================================================================================================
 #include "globals.h"
 
-const int FRAME_SIZE = 577;
 
 // We're going to count and display the number of full frame sets we receive
 int frame_set_count = 0;
-
-
-//=========================================================================================================
-// This is the structure of a command packet
-//=========================================================================================================
-struct command_t
-{
-    uint8_t tx_en;
-    uint8_t prf_sel;
-    uint8_t clk_sel;
-    uint8_t pt_sel;
-    uint8_t seq_loop_cnt;
-    uint8_t seq_sel;
-    uint8_t tx_dur_msb;
-    uint8_t tx_dur_lsb;
-};
-//=========================================================================================================
 
 
 //=========================================================================================================
@@ -66,10 +48,10 @@ const int FRAME_SET = (1 << CMD_HEADER  ) | (1 << PCB0_HEADER) | (1 << PCB1_HEAD
 //=========================================================================================================
 command_t command_packet;
 
-unsigned char data_packet_0[FRAME_SIZE * 2];
-unsigned char data_packet_1[FRAME_SIZE * 2];
-unsigned char data_packet_2[FRAME_SIZE * 2];
-unsigned char data_packet_3[FRAME_SIZE * 2];
+unsigned char data_packet_0[RAM_FRAME_SIZE * 2];
+unsigned char data_packet_1[RAM_FRAME_SIZE * 2];
+unsigned char data_packet_2[RAM_FRAME_SIZE * 2];
+unsigned char data_packet_3[RAM_FRAME_SIZE * 2];
 //=========================================================================================================
 
 
