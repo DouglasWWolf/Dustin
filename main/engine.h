@@ -14,6 +14,9 @@ public:
 
 protected:
 
+    // Sends a status message back to the client side
+    void    send_status();
+
     // A set of bitflags with 1 bit per packet type
     int     m_rcvd_flags;
 

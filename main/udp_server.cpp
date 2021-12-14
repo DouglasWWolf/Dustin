@@ -23,13 +23,16 @@
 static const char *TAG = "udp_server";
 
 // This is the UDP port number that we're listening on
-const int SERVER_PORT = 1000;
+const int SERVER_PORT = 1182;
 
 // This is contains the information about the server socket
 static struct sockaddr_in6 sock_desc;
 
 // When we receive a UDP message, this will contain the IP address of the sender
 static struct sockaddr_in6 source_addr; 
+
+// We're going to treat "sock_desc" as though it were a "sock_addr_in"
+static sockaddr_in& sockaddr_source = *(sockaddr_in*)&source_addr;
 
 // This contains the socket descriptor of the socket when it's open
 static int  sock = -1;
@@ -60,8 +63,10 @@ static void hard_shutdown()
 //========================================================================================================= 
 void CUDPServer::task()
 {
+    char source_ip[20];
+
     // How long is the buffer that will hold the address of the sender?
-    socklen_t socklen = sizeof(source_addr);
+    socklen_t source_length = sizeof(source_addr);
     
     // We're going to treat "sock_desc" as though it were a "sock_addr_in"
     sockaddr_in& sockaddr = *(sockaddr_in*)&sock_desc;
@@ -92,7 +97,7 @@ void CUDPServer::task()
     while (true)
     {
         // Wait for a message to arrive
-        int length = recvfrom(sock, input, sizeof(input) - 1, 0, (struct sockaddr *)&source_addr, &socklen);
+        int length = recvfrom(sock, input, sizeof(input) - 1, 0, (struct sockaddr *)&source_addr, &source_length);
 
         // If that failed, tell the engineer
         if (length < 0)
@@ -100,6 +105,10 @@ void CUDPServer::task()
             ESP_LOGE(TAG, "recvfrom failed: errno %d", errno);
             continue;
         }
+
+        // Convert the sender's IP address into a string and display it
+        inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr, source_ip, sizeof(source_ip) - 1);
+        printf("Rcvd packet type %i (%4i) bytes from %s\n", *input, length, source_ip);
 
         // Call the appropriate command handler
         Engine.on_incoming_packet(input, length);
@@ -154,5 +163,23 @@ void CUDPServer::stop()
 
     // And close the socket if it's open
     hard_shutdown();
+}
+//=========================================================================================================
+
+
+//=========================================================================================================
+// reply() - Send a reply back to the last host that sent us a message
+//=========================================================================================================
+void CUDPServer::reply(void* data, int length)
+{
+
+    // We want to send our reply back to the same port number we're listening on
+    sockaddr_source.sin_port = htons(SERVER_PORT);
+
+    // Send the message back
+    int err = sendto(sock, data, length, 0, (struct sockaddr *)&source_addr, sizeof source_addr);
+
+    // Say something if an error occurs
+    if (err < 0) printf("sendto() failed with %i\n", err);
 }
 //=========================================================================================================

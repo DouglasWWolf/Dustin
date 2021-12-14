@@ -16,6 +16,9 @@ public:
     // Call this to stop the server task
     void    stop();
 
+    // Use this to reply back to the host that sent data
+    void    reply(void* data, int length);
+
 public:
     
     // This is the task that serves as our UDP server.

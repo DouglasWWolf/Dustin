@@ -5,6 +5,9 @@
 
 const int FRAME_SIZE = 577;
 
+// We're going to count and display the number of full frame sets we receive
+int frame_set_count = 0;
+
 //=========================================================================================================
 // These are the various kinds of packets we can receive
 //=========================================================================================================
@@ -15,6 +18,22 @@ unsigned char data_packet_2[FRAME_SIZE * 2];
 unsigned char data_packet_3[FRAME_SIZE * 2];
 //=========================================================================================================
 
+
+//=========================================================================================================
+// This is the structure of a status reply that we will send back to the client side
+//=========================================================================================================
+struct status_reply_t
+{
+    uint8_t    packet_type;
+    uint8_t    fpga_version;
+    uint8_t    fpga_revision;
+    uint8_t    cmd_pkt_rcvd;
+    uint8_t    pcb0_pkt_rcvd;
+    uint8_t    pcb1_pkt_rcvd;
+    uint8_t    pcb2_pkt_rcvd;
+    uint8_t    pcb3_pkt_rcvd;
+};
+//=========================================================================================================
 
 
 //=========================================================================================================
@@ -53,11 +72,8 @@ void CEngine::init()
 //=========================================================================================================
 void CEngine::on_incoming_packet(const char* message, int length)
 {
-    // Tell the engineer what kind of packet we received
-    printf("Rcvd packet type %i\n", *message);
-
     // Packet type is the first byte of the message, and we bump the pointer to the actual data
-    int packet_type = *message++;
+    unsigned char packet_type = *message++;
 
     // Stuff the packet into the correct buffer
     switch (packet_type)
@@ -83,7 +99,7 @@ void CEngine::on_incoming_packet(const char* message, int length)
             break;
 
         case STAT_HEADER:
-//?            send_status();
+            send_status();
             return;
 
         default:
@@ -95,10 +111,39 @@ void CEngine::on_incoming_packet(const char* message, int length)
     // Keep track of which packets we have received
     m_rcvd_flags |= (1 << packet_type);
 
-    if (m_rcvd_flags & FRAME_SET)
+    // If we've received a full set of frames...
+    if (m_rcvd_flags == FRAME_SET)
     {
-        printf("Full set of frame received\n");
+        printf("Full set of frame received: %i\n\n", ++frame_set_count);
         m_rcvd_flags = 0;
     }
+}
+//=========================================================================================================
+
+
+//=========================================================================================================
+// send_status() - Sends a status message back to the client side
+//=========================================================================================================
+void CEngine::send_status()
+{
+    // This is the message we're going to send back
+    status_reply_t    status;
+
+    // The is a packet type 5
+    status.packet_type   = 0x05;
+    
+    // Fill in the FPGA version and revision with what we fetched from the FPGA
+    status.fpga_version  = 1;
+    status.fpga_revision = 42;
+
+    // Fill in the indicators of which packets we have received
+    status.cmd_pkt_rcvd  = (m_rcvd_flags & (1 << CMD_HEADER )) ? 0xFF : 0;
+    status.pcb0_pkt_rcvd = (m_rcvd_flags & (1 << PCB0_HEADER)) ? 0xFF : 0;
+    status.pcb1_pkt_rcvd = (m_rcvd_flags & (1 << PCB1_HEADER)) ? 0xFF : 0;
+    status.pcb2_pkt_rcvd = (m_rcvd_flags & (1 << PCB2_HEADER)) ? 0xFF : 0;
+    status.pcb3_pkt_rcvd = (m_rcvd_flags & (1 << PCB3_HEADER)) ? 0xFF : 0;
+
+    // And send this message back to the host
+    UDPServer.reply(&status, sizeof status);
 }
 //=========================================================================================================
